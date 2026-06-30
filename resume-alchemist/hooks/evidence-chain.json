@@ -1,0 +1,18 @@
+{
+  "_comment": "resume-alchemist evidence chain hook. Ensures skills have supporting evidence.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.resume-hooks/evidence-chain.sh",
+            "timeout": 5,
+            "async": false
+          }
+        ]
+      }
+    ]
+  }
+}

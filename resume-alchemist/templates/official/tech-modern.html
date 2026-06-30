@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简历 - {{name}} - {{target_role}}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+      background: #fff;
+    }
+
+    .resume {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 30px;
+    }
+
+    /* 左侧边栏 */
+    .sidebar {
+      background: #2c3e50;
+      color: #fff;
+      padding: 30px 20px;
+      border-radius: 5px;
+    }
+
+    .sidebar h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .sidebar .target-role {
+      font-size: 14px;
+      color: #3498db;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-section {
+      margin-bottom: 25px;
+    }
+
+    .sidebar-section h2 {
+      font-size: 14px;
+      color: #3498db;
+      border-bottom: 1px solid #3498db;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .contact-item .icon {
+      width: 16px;
+      text-align: center;
+    }
+
+    .skill-item {
+      margin-bottom: 8px;
+    }
+
+    .skill-item .skill-name {
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+
+    .skill-item .skill-bar {
+      height: 4px;
+      background: #34495e;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .skill-item .skill-fill {
+      height: 100%;
+      background: #3498db;
+      border-radius: 2px;
+    }
+
+    /* 右侧主内容 */
+    .main-content {
+      padding: 10px 0;
+    }
+
+    section {
+      margin-bottom: 25px;
+    }
+
+    section h2 {
+      font-size: 18px;
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+
+    /* 自我评价 */
+    .summary p {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.8;
+    }
+
+    /* 工作经历 */
+    .job {
+      margin-bottom: 20px;
+      padding-left: 15px;
+      border-left: 3px solid #3498db;
+    }
+
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .job-header h3 {
+      font-size: 16px;
+      color: #2c3e50;
+    }
+
+    .job-header .date {
+      font-size: 12px;
+      color: #7f8c8d;
+    }
+
+    .job ul {
+      list-style: none;
+    }
+
+    .job li {
+      padding: 4px 0;
+      font-size: 13px;
+      color: #555;
+      position: relative;
+      padding-left: 15px;
+    }
+
+    .job li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: #3498db;
+    }
+
+    /* 项目经历 */
+    .project {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      border-left: 3px solid #3498db;
+    }
+
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .project-header h3 {
+      font-size: 16px;
+      color: #2c3e50;
+    }
+
+    .project-header .role {
+      font-size: 12px;
+      color: #3498db;
+      background: #e8f4f8;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    .project-header .date {
+      font-size: 12px;
+      color: #7f8c8d;
+    }
+
+    .project-desc {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .project-details {
+      list-style: none;
+      margin-bottom: 10px;
+    }
+
+    .project-details li {
+      padding: 4px 0;
+      font-size: 13px;
+      color: #555;
+      position: relative;
+      padding-left: 15px;
+    }
+
+    .project-details li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #3498db;
+    }
+
+    .project-result {
+      font-size: 13px;
+      color: #27ae60;
+      font-weight: bold;
+    }
+
+    /* 教育背景 */
+    .school {
+      margin-bottom: 10px;
+    }
+
+    .school h3 {
+      font-size: 16px;
+      color: #2c3e50;
+      margin-bottom: 5px;
+    }
+
+    .school p {
+      font-size: 13px;
+      color: #555;
+    }
+
+    /* 打印优化 */
+    @media print {
+      body {
+        font-size: 12px;
+      }
+
+      .resume {
+        padding: 20px;
+        grid-template-columns: 200px 1fr;
+        gap: 20px;
+      }
+
+      .sidebar {
+        padding: 15px;
+      }
+
+      section {
+        margin-bottom: 15px;
+      }
+
+      .project {
+        background: #fff;
+        border: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="resume">
+    <!-- 左侧边栏 -->
+    <aside class="sidebar">
+      <h1>{{name}}</h1>
+      <p class="target-role">{{target_role}}</p>
+
+      <div class="sidebar-section">
+        <h2>联系方式</h2>
+        <div class="contact-item">
+          <span class="icon">📱</span>
+          <span>{{phone}}</span>
+        </div>
+        <div class="contact-item">
+          <span class="icon">📧</span>
+          <span>{{email}}</span>
+        </div>
+        <div class="contact-item">
+          <span class="icon">📍</span>
+          <span>{{location}}</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h2>核心技能</h2>
+        {{#each core_skills}}
+        <div class="skill-item">
+          <div class="skill-name">{{this.name}} ({{this.level}})</div>
+          <div class="skill-bar">
+            <div class="skill-fill" style="width: {{this.score}}%"></div>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="sidebar-section">
+        <h2>教育背景</h2>
+        {{#each education}}
+        <div style="margin-bottom: 10px;">
+          <div style="font-size: 13px; font-weight: bold;">{{this.school}}</div>
+          <div style="font-size: 12px; color: #bdc3c7;">{{this.major}} - {{this.degree}}</div>
+          <div style="font-size: 12px; color: #bdc3c7;">{{this.date}}</div>
+        </div>
+        {{/each}}
+      </div>
+    </aside>
+
+    <!-- 右侧主内容 -->
+    <main class="main-content">
+      <!-- 自我评价 -->
+      <section class="summary">
+        <h2>自我评价</h2>
+        <p>{{summary}}</p>
+      </section>
+
+      <!-- 工作经历 -->
+      <section class="experience">
+        <h2>工作经历</h2>
+        {{#each work_history}}
+        <div class="job">
+          <div class="job-header">
+            <h3>{{this.company}} - {{this.position}}</h3>
+            <span class="date">{{this.date}}</span>
+          </div>
+          <ul>
+            {{#each this.responsibilities}}
+            <li>{{this}}</li>
+            {{/each}}
+          </ul>
+        </div>
+        {{/each}}
+      </section>
+
+      <!-- 项目经历 -->
+      <section class="projects">
+        <h2>项目经历</h2>
+        {{#each projects}}
+        <div class="project">
+          <div class="project-header">
+            <h3>{{this.name}}</h3>
+            <span class="role">{{this.role}}</span>
+            <span class="date">{{this.date}}</span>
+          </div>
+          <p class="project-desc">{{this.description}}</p>
+          <ul class="project-details">
+            {{#each this.details}}
+            <li>{{this}}</li>
+            {{/each}}
+          </ul>
+          <p class="project-result">{{this.result}}</p>
+        </div>
+        {{/each}}
+      </section>
+
+      <!-- 证书/荣誉 -->
+      {{#if certificates}}
+      <section class="certificates">
+        <h2>证书/荣誉</h2>
+        <ul style="list-style: none;">
+          {{#each certificates}}
+          <li style="padding: 4px 0; font-size: 13px; color: #555;">• {{this}}</li>
+          {{/each}}
+        </ul>
+      </section>
+      {{/if}}
+    </main>
+  </div>
+</body>
+</html>

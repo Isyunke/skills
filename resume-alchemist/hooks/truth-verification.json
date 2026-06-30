@@ -1,0 +1,18 @@
+{
+  "_comment": "resume-alchemist truth verification hook. Verifies that resume content is based on real experiences.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.resume-hooks/truth-verification.sh",
+            "timeout": 5,
+            "async": false
+          }
+        ]
+      }
+    ]
+  }
+}

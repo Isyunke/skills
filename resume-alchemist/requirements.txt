@@ -1,0 +1,17 @@
+# Resume Alchemist - Python Dependencies
+# =============================
+
+# PDF Parsing
+pdfplumber>=0.10.0
+
+# DOCX Parsing
+python-docx>=1.0.0
+
+# HTML Parsing
+beautifulsoup4>=4.12.0
+
+# PDF Generation
+weasyprint>=60.0
+
+# Optional: PDF Generation (fallback)
+# playwright>=1.40.0
