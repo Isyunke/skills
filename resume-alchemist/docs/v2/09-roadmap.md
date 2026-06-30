@@ -1,0 +1,339 @@
+# 09 · 分期落地路线图
+
+> 不一次性大改。按下面 4 期推进，每期都有清晰的验收标准和可独立交付的价值。
+> 每期之间用户都能拿到一个可用的、不退化的版本。
+
+---
+
+## 一、总览
+
+```
+                        v2.0 Release Train
+
+P0  [真·强制 + 工具确定性]  ──┐
+                              │  → v1.4.0 (兼容版本)
+P1  [MCP + 跨 agent 接入]   ──┤
+                              │  → v2.0.0-beta
+P2  [数据层结构化 + 真模板]  ──┤
+                              │  → v2.0.0
+P3  [反馈闭环 + 角色化 coach] ┘
+                                 → v2.1.0+
+```
+
+| 期 | 主题 | 验收 | 版本 |
+|---|---|---|---|
+| **P0** | 把"假强制"做真 | hooks → validator，工具确定性 | v1.4.0 (向后兼容) |
+| **P1** | 跨 agent 第一步 | MCP server 跑通 5 阶段 | v2.0.0-beta |
+| **P2** | 数据层重写 | yaml 取代 markdown，模板引擎落地 | v2.0.0 |
+| **P3** | 闭环 + 教练 | outcomes + coach + dashboard | v2.1.0+ |
+
+---
+
+## 二、P0：真·强制 + 工具确定性
+
+### 2.1 目标
+
+- 把审计文档 [TECHNICAL-AUDIT-v1.2.0.md](../TECHNICAL-AUDIT-v1.2.0.md) 中的 P0 问题修掉
+- 不引入新概念，**v1 用户不感知**（只是"突然校验变严了，但有清晰错误提示"）
+- 为 v2 后续打基础
+
+### 2.2 任务分解
+
+| # | 任务 | 工作量 | 阻塞关系 |
+|---|---|---|---|
+| P0-1 | 写 `tools/evidence_validator.py`（Pydantic schema 子集） | M | - |
+| P0-2 | 写 `tools/io_utils.py`（原子写 + filelock） | S | - |
+| P0-3 | 写 `tools/state_builder.py`（state 派生雏形） | S | - |
+| P0-4 | 把 v1 hooks 改造为"调用 validator 的薄壳" | S | P0-1 |
+| P0-5 | 升级 `tools/keyword_matcher.py` 支持行业词包 yaml | M | - |
+| P0-6 | 升级 `tools/html_to_pdf.py` `--check` 命令 + 引擎排序 | S | - |
+| P0-7 | 引入 Pydantic v2，定义 7 个核心 schema (minimal) | M | - |
+| P0-8 | 单元测试覆盖率 ≥80% | M | P0-1..7 |
+| P0-9 | 跨平台 CI（Win/Mac/Linux） | S | P0-8 |
+
+工作量：S = 小（1-3 天）、M = 中（3-7 天）、L = 大（>7 天）。
+
+### 2.3 验收标准
+
+- [ ] `pytest tests/` 全绿，覆盖率 ≥80%
+- [ ] `resume validate` CLI 可跑（即使 skill 还没改）
+- [ ] 一份故意造假的简历能被 validator 阻断，并给出可操作的修复建议
+- [ ] Windows + Linux CI 都 pass
+- [ ] v1 用户跑 `pip install --upgrade resume-alchemist` 后**不感知到行为变化**（除了校验更严）
+- [ ] 无任何破坏性改动
+
+### 2.4 风险与缓解
+
+| 风险 | 缓解 |
+|---|---|
+| Pydantic v1 → v2 迁移可能影响现有依赖 | 直接装 v2，老代码极少 |
+| validator 误报阻断老简历 | 提供 `--no-strict` flag，先警告再阻断 |
+| 用户被严格校验吓退 | 错误信息走友好模板（[07 §四](07-ux-improvements.md)） |
+
+---
+
+## 三、P1：MCP + 跨 agent 接入
+
+### 3.1 目标
+
+让 ChatGPT / Cursor / Cline / Gemini CLI / Copilot Chat 都能用 resume-alchemist 的核心 7 个动作。
+
+### 3.2 任务分解
+
+| # | 任务 | 工作量 | 阻塞 |
+|---|---|---|---|
+| P1-1 | 加 `mcp` 依赖；建 `resume_alchemist/mcp_server/` | S | - |
+| P1-2 | 暴露 7 个核心 MCP tools (init / intake / match / build / status / validate / show) | L | P0 |
+| P1-3 | 暴露 MCP resources（profile / status / outcomes） | M | P1-2 |
+| P1-4 | 暴露 MCP prompts | S | P1-2 |
+| P1-5 | `resume serve` CLI（stdio / sse / http） | M | P1-2 |
+| P1-6 | HTTP transport + 简单 token 鉴权 | M | P1-5 |
+| P1-7 | OpenAPI 生成（给 ChatGPT Custom GPT 用） | M | P1-6 |
+| P1-8 | 写 5 个 agent 接入指南（Claude Code/Cursor/Cline/ChatGPT/Gemini） | M | P1-2 |
+| P1-9 | 端到端集成测试（跨 agent 模拟） | L | P1-2..8 |
+| P1-10 | 双层 SKILL.md 改造（仍是 v1 风格的 13 个） | M | - |
+
+### 3.3 验收标准
+
+- [ ] `resume serve` 启动后，Claude Desktop 能列出所有 tools
+- [ ] 在 Cursor 里完成 "init → intake → match → build" 全流程
+- [ ] 在 ChatGPT Custom GPT 里完成同样的流程
+- [ ] CLI 与 MCP 行为完全一致（同输入 → 同输出）
+- [ ] MCP tool input/output schema 严格（无 LLM 自由发挥的空间）
+- [ ] traces/ 日志记录每次 MCP 调用
+- [ ] Claude Code 老用户继续用 SKILL.md 路径，**不受影响**
+
+### 3.4 风险与缓解
+
+| 风险 | 缓解 |
+|---|---|
+| MCP SDK 不稳定/版本变动 | 锁版本；写适配层隔离 |
+| ChatGPT Custom GPT 配置复杂 | 提供脚本一键生成 OpenAPI manifest |
+| HTTP transport 暴露安全风险 | 默认 localhost-only + token 强制 |
+| 各 agent MCP 实现差异 | 5 个接入指南各自写 + CI 跑实际 stdio 测试 |
+
+---
+
+## 四、P2：数据层结构化 + 真模板引擎
+
+### 4.1 目标
+
+- 把所有事实存 `data.yaml`，叙事 `narrative.md` 由模板渲染
+- 模板引擎从"LLM 拼 HTML"切到 Jinja2
+- 提供 `resume migrate` 把 v1 数据无缝转换
+
+### 4.2 任务分解
+
+| # | 任务 | 工作量 | 阻塞 |
+|---|---|---|---|
+| P2-1 | 完整 Pydantic schema (8 个实体) | M | P0 |
+| P2-2 | KB 目录重组（profile/projects/<id>/...） | M | P2-1 |
+| P2-3 | `tools/renderer.py` Jinja2 模板引擎 | M | P2-1 |
+| P2-4 | 转换 6 个官方模板为 Jinja2 + 拆分 CSS | M | P2-3 |
+| P2-5 | narrative.md 模板（project/jd/match-report/interview/learning） | M | P2-3 |
+| P2-6 | `tools/parser.py` 升级（支持 reverse parse HTML → resume.yaml） | L | P2-1 |
+| P2-7 | `tools/migrate.py` v1 → v2 | L | P2-1..6 |
+| P2-8 | `tools/diff.py`（语义 diff） | M | P2-1 |
+| P2-9 | `tools/i18n.py`（文化适配） | L | P2-3 |
+| P2-10 | `tools/exporter.py`（HTML/PDF/DOCX/JSON Resume/Markdown） | M | P2-3 |
+| P2-11 | Skill 重构 13 → 7（详见 [05 章](05-skills-redesign.md)） | L | P2-1..10 |
+| P2-12 | Orchestrator state machine 落地 | M | P2-11 |
+| P2-13 | 完整迁移测试矩阵 | L | P2-7 |
+| P2-14 | 文档全面更新 | M | 全部 |
+
+### 4.3 验收标准
+
+- [ ] 一个空项目跑 `resume init → intake → match → build → export` 全程产物正确
+- [ ] v1 用户跑 `resume migrate` 数据完全保留，触发词全部继续工作
+- [ ] v2 简历模板与 v1 视觉一致（用户感知不到模板引擎换了）
+- [ ] PDF 导出在 Win/Mac/Linux 三平台都能用
+- [ ] JSON Resume 导出可被 [jsonresume.org themes](https://jsonresume.org/themes) 直接渲染
+- [ ] 所有 yaml 通过 `resume validate`
+- [ ] schema diff 工具能 diff 两份 resume.yaml 给出可读输出
+
+### 4.4 风险与缓解
+
+| 风险 | 缓解 |
+|---|---|
+| 用户的 v1 markdown 格式不标准，迁移失败 | 部分失败可恢复（[08 §七](08-migration-v1-to-v2.md)）；保留备份；逐条提示 |
+| Jinja2 模板比原 HTML 更难维护 | 写模板开发指南；提供 base template 让用户继承 |
+| 双轨制（yaml + md）导致用户改 md 没用 | narrative.md 顶部明确标 "AUTOGENERATED"；validator 警告 |
+| 反向 HTML 解析丢字段 | 标 best-effort；建议下次重生成；保留原 HTML 不动 |
+
+---
+
+## 五、P3：反馈闭环 + 角色化 coach
+
+### 5.1 目标
+
+- 加 outcomes 体系，让"针对性优化"有真实信号
+- 加 coach persona，让不同岗位的体验真正分化
+- dashboard 升级到 ROI 视角
+
+### 5.2 任务分解
+
+| # | 任务 | 工作量 | 阻塞 |
+|---|---|---|---|
+| P3-1 | outcomes.yaml schema + Pydantic model | S | P2 |
+| P3-2 | `track` skill + 对话/命令两种入口 | M | P3-1 |
+| P3-3 | `tools/roi_analyzer.py` + 规则引擎 | M | P3-1 |
+| P3-4 | `status` 升级为真·dashboard | M | P3-3 |
+| P3-5 | coach persona 配置（tech/product/design/sales/default） | M | P2 |
+| P3-6 | `intake.dialog` 注入 persona | M | P3-5 |
+| P3-7 | `match` 权重个性化（按 persona） | M | P3-5 |
+| P3-8 | `output --target interview --mode=live` 交互式模拟 | L | P3-1 |
+| P3-9 | 用户可自定义 persona（继承官方） | S | P3-5 |
+| P3-10 | 主动提醒（投递 14 天无回应等） | S | P3-1..4 |
+| P3-11 | 隐私边界（outcomes 默认不入 git 等） | S | P3-1 |
+
+### 5.3 验收标准
+
+- [ ] 用户投了 5 份简历后，`status` 显示完整漏斗
+- [ ] `track` 后 30 秒内 dashboard 更新
+- [ ] 同样的对话，技术 persona 和 PM persona 问出来的问题明显不一样
+- [ ] 弱点会从面试反馈自动进 `outcomes.yaml.weak_spots`，下次 build 和 interview 时被考虑
+- [ ] 自定义 persona 能覆盖官方字段
+- [ ] live 模式面试体验真实（一题一题、追问深度合理、最后给评分）
+- [ ] 隐私默认安全（outcomes 不进 git，traces 自动脱敏）
+
+### 5.4 风险与缓解
+
+| 风险 | 缓解 |
+|---|---|
+| 用户不愿意 track（嫌麻烦） | 主动提醒；track 极简（一句话即可） |
+| ROI 数据太少时 dashboard 没意义 | 样本不足时显式标 "n=2，仅供参考" |
+| persona 让用户困惑（不知道选哪个） | 默认按 `target_role` 自动选；只暴露 `resume coach show` |
+| live 模式 LLM 评分不准 | 用 review 引擎隔离评估；用户可手动覆盖评分 |
+| 弱点回流形成偏见（只学被批的，不学没机会上场的） | 弱点只是建议；coach 仍按 JD 全维度评估 |
+
+---
+
+## 六、跨期通用任务（贯穿 P0-P3）
+
+| 任务 | 持续做 |
+|---|---|
+| 文档：CHANGELOG + 迁移指南 | 每期都写 |
+| 测试：单元 + 集成 + E2E | 不允许覆盖率回退 |
+| 国际化 | 新文案同时加 zh-CN / en-US |
+| 性能：渲染 + match 控制在亚秒 | 设性能 budget |
+| 可观测性：traces 一致格式 | 每次接入新组件都加 |
+| 用户反馈：issue 模板 + 用户访谈 | 每期发版前找 3 个真实用户跑一遍 |
+
+---
+
+## 七、各期完成后的"明面交付物"
+
+### P0 → v1.4.0
+
+- ✅ v1 用户跑 `pip install -U` 立刻获得：更严格的校验、更友好的错误提示
+- ✅ 给开发者：Pydantic schema 可用、Python tools 可单独调用
+- ❌ 没有：MCP / 跨 agent / outcomes / 新模板
+
+### P1 → v2.0.0-beta
+
+- ✅ Cursor / Cline / Gemini CLI 用户可用
+- ✅ ChatGPT 用户通过 Custom GPT 可用
+- ✅ CI/CD 流水线可调 `resume validate`
+- ❌ 仍是 markdown 数据层（MCP 暴露的 tool 还是包装 LLM 调用）
+
+### P2 → v2.0.0
+
+- ✅ 全 yaml + Jinja2 + 真·确定性渲染
+- ✅ v1 用户跑 `resume migrate` 平滑升级
+- ✅ JSON Resume / DOCX / Markdown 多端导出
+- ❌ outcomes / coach 还没
+
+### P3 → v2.1.0+
+
+- ✅ 完整反馈闭环
+- ✅ 角色化教练
+- ✅ live 模式模拟面试
+- ✅ 真·dashboard
+
+---
+
+## 八、可选/未来（不进 v2.0）
+
+| 功能 | 何时考虑 |
+|---|---|
+| 语义嵌入做 match | v2.1，作为可选 extras `pip install resume-alchemist[semantic]` |
+| 邮箱集成（自动识别面试邀请） | v2.2 |
+| 多用户协作 / 团队版 | 看用户反馈 |
+| Web UI | 看 MCP 生态成熟度，可能永不做 |
+| 招聘市场分析（薪资数据） | 不做 |
+| 自动投递 | 不做 |
+| AI 模拟面试官人格库（多家公司风格） | v2.3，社区贡献 |
+
+---
+
+## 九、风险登记（项目级）
+
+| 风险 | 影响 | 概率 | 缓解 |
+|---|---|---|---|
+| MCP 生态迭代快，协议变动 | 高 | 中 | 锁版本；用 adapter pattern；订阅 MCP 官方变更 |
+| Pydantic v2 性能问题 | 中 | 低 | 跑性能 budget；必要时延迟到 v2.x |
+| weasyprint Windows 兼容继续恶化 | 中 | 中 | 主推 playwright；保留多引擎选择 |
+| 用户档案数据量增长后 git 仓库膨胀 | 低 | 低 | 文档建议 .resume-cache/ 不入 git |
+| LLM 输出漂移影响测试稳定性 | 中 | 高 | golden test 用 LLM-free 路径；mock LLM 调用 |
+| 跨 agent 体验不一致 | 中 | 中 | 文案集中管理；每期跑跨 agent 集成测试 |
+| Claude Code 用户因 schema 改动不满 | 高 | 低 | migrate 完全无缝；老路径都保留；提供 revert |
+
+---
+
+## 十、最早可启动的工作（如果你今天就动手）
+
+按优先级：
+
+1. **写 `evidence_validator.py`** —— 价值最大，独立可交付，不依赖其他
+2. **写 7 个核心 Pydantic schema** —— 后面所有工具都基于它
+3. **写 `migrate.py` 骨架** —— 哪怕只做 state 字段转换，也让 v1 用户感到安心
+4. **建 `mcp_server/` 雏形，只暴露 `resume.status` 一个 tool** —— 验证 MCP 链路通畅
+
+完成这 4 个，就有了一个可演示的"v2 雏形"，可以拿去找真实用户做用户测试，再决定 P1/P2 节奏。
+
+---
+
+## 十一、阶段验收的非功能性指标
+
+| 指标 | P0 | P2 | P3 |
+|---|---|---|---|
+| 单元测试覆盖率 | ≥80% | ≥85% | ≥85% |
+| E2E 测试数 | 1 | 3 | 5 |
+| CLI 启动时间 | <500ms | <500ms | <500ms |
+| MCP tool 平均响应 | - | <2s | <2s |
+| 跨平台 CI 通过率 | 100% | 100% | 100% |
+| Migration 成功率（fixtures） | - | 100% | 100% |
+| 文档完整度 | 核心 spec | 用户指南 | 所有 |
+
+---
+
+## 十二、社区与发布
+
+| 阶段 | 动作 |
+|---|---|
+| P0 完成 | 在 v1.4.0 发布说明里**告知** v2 计划，征求反馈 |
+| P1 完成 | 发 beta，找早期采用者（Cursor 用户、MCP 玩家） |
+| P2 完成 | 正式 v2.0.0 发布，主推 `resume migrate` |
+| P3 完成 | v2.1.0 全功能版，配套用户案例 |
+
+每期发布都包含：
+- CHANGELOG
+- 迁移指南（如果有 breaking）
+- 至少 1 个 demo 视频（GIF 即可）
+- 已知问题清单
+
+---
+
+## 结语
+
+这份 v2 方案的核心承诺：
+
+1. **不退化任何 v1 用户体验**——所有触发词、对话流、产物结构兼容
+2. **让 Claude Code 之外的 agent 也能用**——MCP 是头等公民
+3. **把"不可妥协的原则"工程化**——hooks → validator，从警告到阻断
+4. **让"针对性"有真实反馈**——outcomes + ROI 闭环
+5. **不引入云依赖，本地优先**——你的求职数据 100% 在你手里
+
+如果同意整体方向，我建议第一步：**从 P0-1 / P0-2 / P0-7 起步**（写 validator + io_utils + 核心 Pydantic schema），这是 v2 的地基，且对 v1 用户完全无感。
+
+需要我开始动手实现 P0 的话，就说"开始 P0"。或者你想先调整方案某一章，告诉我即可。
