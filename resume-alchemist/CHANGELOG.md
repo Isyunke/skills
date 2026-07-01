@@ -7,6 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-07-01
+
+> **v2 preview release · P0 · foundation layer.**
+> Backward compatible with 1.3.x: existing Claude Code users see no
+> behavior change unless they explicitly invoke the new tools. The v1
+> triggers, workflows, and file layout are fully preserved. See
+> [docs/v2/README.md](docs/v2/README.md) for the full v2 plan.
+
+### Added
+
+#### Tools layer (v2 foundation)
+- **`tools/schemas/`**: Pydantic v2 strict schemas for every KB entity
+  (identity, skills, project, jd, resume, outcomes, state) with shared
+  `SCHEMA_VERSION = "2.0"` and `SchemaVersionError` for migrate routing.
+- **`tools/io_utils.py`**: cross-platform atomic writes, cross-process
+  filelock (`file_lock` / `locked_edit_yaml`), consistent YAML/JSON
+  loaders with schema-version awareness.
+- **`tools/evidence_validator.py`**: real, blocking enforcement of the
+  three non-negotiable principles (truth_first / evidence_chain /
+  targeted_for_jd). Every violation ships a `fix` hint following the
+  What/Why/How template. CLI: `python -m tools.evidence_validator`.
+- **`tools/state_builder.py`**: derives `.resume-state.json` from the KB
+  on demand; preserves `initialized_at` and pinned `active_jd_id` across
+  rebuilds. CLI: `python -m tools.state_builder`.
+
+#### Data assets
+- **`tools/data/keywords/{tech,product,design}.yaml`**: externalised
+  industry keyword packs with `canonical` + `aliases` + per-term weight.
+  User-extensible without code changes.
+
+#### Testing / CI
+- 6 new test modules under `tests/`: schemas, io_utils, evidence
+  validator, state builder, keyword matcher, CLI smoke tests.
+- **130 tests · 92.1% coverage** (see `.coveragerc` for scope).
+- GitHub Actions CI matrix: Ubuntu/Windows/macOS × Python 3.9/3.11/3.12,
+  plus a keyword-pack YAML sanity job.
+
+#### Documentation
+- **`docs/v2/`**: 10-chapter refactor plan (vision, 7-layer
+  architecture, data spec, tools spec, MCP cross-agent, skill redesign,
+  feedback loop, UX improvements, migration, roadmap).
+
+### Changed
+
+#### `tools/keyword_matcher.py` (rewritten, backward compatible)
+- Keyword pack now loaded from `tools/data/keywords/<industry>.yaml`
+  instead of a hardcoded dict.
+- Aliases (`K8s` ↔ `Kubernetes`, `高并发` ↔ `High Concurrency`, ...)
+  are resolved to the canonical form on extraction.
+- Added `--industry`, `--json`, `--list-industries` CLI flags.
+- New `weighted_coverage` metric; `coverage` retained for compatibility.
+- Legacy `DOMAIN_KEYWORDS` module attribute rebuilt from the tech pack
+  so existing importers keep working.
+
+#### `tools/html_to_pdf.py` (rewritten, backward compatible)
+- New `--check` gives a detailed per-engine health report with
+  actionable install hints.
+- New `--engine {auto,weasyprint,playwright}` flag.
+- Windows now prefers Playwright by default (avoids the GTK footgun).
+- Structured `html_to_pdf()` Python API returns `(ok, engine_used)`.
+- Exit codes documented: 0 success, 1 usage, 2 no engine, 3 crash.
+- `atomic_write` is now a thin re-export from `tools.io_utils`.
+
+#### Hooks (bash shims, gracefully degrade)
+- **`hooks/truth-verification.sh`** and **`hooks/evidence-chain.sh`**
+  rewritten as thin shims: try `tools/evidence_validator.py` first,
+  fall back to the v1 grep heuristic if the v2 tools aren't installed.
+  Real principle violations now **block** (exit 1) with actionable
+  messages instead of only warning.
+
+### Deps
+- Added core: `pydantic>=2.5.0`, `pyyaml>=6.0.1`, `filelock>=3.13.0`.
+- Optional / dev: `pytest`, `pytest-cov` (unchanged for legacy tests).
+
+### Notes for existing users
+- **Nothing breaks.** All v1 triggers, workflows, and file layouts
+  continue to work exactly as before.
+- New tools live under `tools/` and are invoked explicitly
+  (`python -m tools.evidence_validator`, etc.). They will start being
+  called automatically by v2 skills in P1/P2.
+- Full migration path to v2 data layout: see
+  [docs/v2/08-migration-v1-to-v2.md](docs/v2/08-migration-v1-to-v2.md).
+
+---
+
 ## [1.3.0] - 2026-06-17
 
 ### Added

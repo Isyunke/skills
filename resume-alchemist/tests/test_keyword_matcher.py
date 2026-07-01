@@ -49,13 +49,14 @@ class TestExtractKeywords(unittest.TestCase):
         self.assertIn('AWS', keywords)
 
     def test_extract_concepts(self):
-        """Should extract Chinese concepts."""
+        """Should extract Chinese concepts via aliases and return their canonical form."""
         text = "高并发系统，使用微服务架构和分布式缓存。"
         keywords = extract_keywords(text)
-        self.assertIn('高并发', keywords)
-        self.assertIn('微服务', keywords)
-        self.assertIn('分布式', keywords)
-        self.assertIn('缓存', keywords)
+        # v2 returns canonical English names for aliases (Chinese terms are aliases).
+        self.assertIn('High Concurrency', keywords)
+        self.assertIn('Microservices', keywords)
+        self.assertIn('Distributed Systems', keywords)
+        self.assertIn('Caching', keywords)
 
     def test_case_insensitive(self):
         """Should match case-insensitively."""

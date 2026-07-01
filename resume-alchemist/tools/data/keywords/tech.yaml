@@ -1,0 +1,259 @@
+schema_version: "2.0"
+schema_type: keyword_pack
+industry: tech
+description: |
+  General-purpose technology keyword pack. Loaded by
+  `tools.keyword_matcher` and inherited by more specific packs.
+  Each entry has a `canonical` name plus optional `aliases` for
+  case-insensitive matching.
+
+categories:
+  programming_languages:
+    - canonical: Python
+      aliases: [py, python3]
+      weight: 1.0
+    - canonical: Java
+      weight: 1.0
+    - canonical: Go
+      aliases: [golang, Go-lang]
+      weight: 1.0
+    - canonical: JavaScript
+      aliases: [JS]
+      weight: 1.0
+    - canonical: TypeScript
+      aliases: [TS]
+      weight: 1.0
+    - canonical: C++
+      aliases: [Cpp, cplusplus]
+      weight: 0.9
+    - canonical: C#
+      aliases: [csharp, ".NET"]
+      weight: 0.9
+    - canonical: Rust
+      weight: 0.9
+    - canonical: Ruby
+      weight: 0.8
+    - canonical: PHP
+      weight: 0.8
+    - canonical: Kotlin
+      weight: 0.8
+    - canonical: Swift
+      weight: 0.8
+    - canonical: Scala
+      weight: 0.7
+
+  frameworks:
+    - canonical: Django
+      weight: 0.9
+    - canonical: Flask
+      weight: 0.9
+    - canonical: FastAPI
+      weight: 0.9
+    - canonical: Spring Boot
+      aliases: [SpringBoot, Spring-Boot, Spring]
+      weight: 0.9
+    - canonical: React
+      weight: 1.0
+    - canonical: Vue
+      aliases: [Vue.js, VueJS]
+      weight: 1.0
+    - canonical: Angular
+      weight: 0.9
+    - canonical: Express
+      aliases: [Express.js, ExpressJS]
+      weight: 0.8
+    - canonical: Node.js
+      aliases: [NodeJS, node]
+      weight: 0.9
+    - canonical: Gin
+      weight: 0.7
+    - canonical: TensorFlow
+      aliases: [TF]
+      weight: 0.9
+    - canonical: PyTorch
+      weight: 0.9
+
+  databases:
+    - canonical: MySQL
+      weight: 1.0
+    - canonical: PostgreSQL
+      aliases: [Postgres, psql]
+      weight: 1.0
+    - canonical: MongoDB
+      aliases: [mongo]
+      weight: 0.9
+    - canonical: Redis
+      weight: 1.0
+    - canonical: Elasticsearch
+      aliases: [ES, ElasticSearch]
+      weight: 0.9
+    - canonical: Oracle
+      weight: 0.7
+    - canonical: SQLite
+      weight: 0.7
+    - canonical: Cassandra
+      weight: 0.7
+    - canonical: Neo4j
+      weight: 0.6
+
+  devops:
+    - canonical: Docker
+      weight: 1.0
+    - canonical: Kubernetes
+      aliases: [K8s, k8s, kube]
+      weight: 1.0
+    - canonical: Git
+      weight: 1.0
+    - canonical: Jenkins
+      weight: 0.7
+    - canonical: CI/CD
+      aliases: [CICD, "CI / CD"]
+      weight: 0.9
+    - canonical: GitHub Actions
+      weight: 0.8
+    - canonical: GitLab CI
+      weight: 0.7
+    - canonical: Terraform
+      aliases: [tf]
+      weight: 0.9
+    - canonical: Ansible
+      weight: 0.7
+    - canonical: Prometheus
+      weight: 0.8
+    - canonical: Grafana
+      weight: 0.8
+    - canonical: Nginx
+      weight: 0.7
+    - canonical: Linux
+      weight: 0.9
+    - canonical: Helm
+      weight: 0.7
+    - canonical: ArgoCD
+      aliases: [Argo CD, Argo-CD]
+      weight: 0.7
+
+  cloud:
+    - canonical: AWS
+      aliases: [Amazon Web Services]
+      weight: 1.0
+    - canonical: Azure
+      weight: 1.0
+    - canonical: GCP
+      aliases: [Google Cloud]
+      weight: 1.0
+    - canonical: S3
+      weight: 0.8
+    - canonical: EC2
+      weight: 0.8
+    - canonical: Lambda
+      aliases: [AWS Lambda]
+      weight: 0.8
+    - canonical: Serverless
+      weight: 0.7
+    - canonical: Microservices
+      aliases: [微服务]
+      weight: 1.0
+    - canonical: API Gateway
+      weight: 0.6
+    - canonical: Load Balancer
+      aliases: [LB, 负载均衡]
+      weight: 0.6
+
+  observability:
+    - canonical: Observability
+      aliases: [可观测性]
+      weight: 0.8
+    - canonical: Logging
+      aliases: [日志]
+      weight: 0.7
+    - canonical: Metrics
+      aliases: [指标]
+      weight: 0.7
+    - canonical: Tracing
+      aliases: [链路追踪, Distributed Tracing]
+      weight: 0.8
+    - canonical: ELK
+      weight: 0.7
+    - canonical: Loki
+      weight: 0.6
+    - canonical: Jaeger
+      weight: 0.6
+    - canonical: Datadog
+      weight: 0.6
+    - canonical: Monitoring
+      aliases: [监控]
+      weight: 0.8
+
+  ai_ml:
+    - canonical: Machine Learning
+      aliases: [ML, 机器学习]
+      weight: 1.0
+    - canonical: Deep Learning
+      aliases: [DL, 深度学习]
+      weight: 1.0
+    - canonical: NLP
+      aliases: [Natural Language Processing, 自然语言处理]
+      weight: 0.9
+    - canonical: Computer Vision
+      aliases: [CV, 计算机视觉]
+      weight: 0.9
+    - canonical: LLM
+      aliases: [Large Language Model, 大模型]
+      weight: 1.0
+    - canonical: RAG
+      aliases: [Retrieval-Augmented Generation, 检索增强]
+      weight: 1.0
+    - canonical: LangChain
+      weight: 0.9
+    - canonical: LlamaIndex
+      weight: 0.7
+    - canonical: Agent
+      aliases: [智能体]
+      weight: 0.9
+    - canonical: Embedding
+      aliases: [嵌入, 向量化]
+      weight: 0.8
+    - canonical: Fine-tuning
+      aliases: [微调]
+      weight: 0.9
+    - canonical: Transformer
+      weight: 0.8
+    - canonical: GPT
+      weight: 0.8
+
+  concepts:
+    - canonical: Distributed Systems
+      aliases: [分布式系统, 分布式]
+      weight: 1.0
+    - canonical: High Concurrency
+      aliases: [高并发]
+      weight: 1.0
+    - canonical: High Availability
+      aliases: [高可用, HA]
+      weight: 0.9
+    - canonical: Performance Optimization
+      aliases: [性能优化]
+      weight: 1.0
+    - canonical: Caching
+      aliases: [缓存]
+      weight: 0.8
+    - canonical: Message Queue
+      aliases: [消息队列, MQ]
+      weight: 0.8
+    - canonical: REST
+      aliases: [RESTful]
+      weight: 0.8
+    - canonical: GraphQL
+      weight: 0.7
+    - canonical: gRPC
+      weight: 0.8
+    - canonical: WebSocket
+      weight: 0.6
+    - canonical: DevOps
+      weight: 0.9
+    - canonical: SRE
+      aliases: [Site Reliability Engineering]
+      weight: 0.9
+    - canonical: Test Automation
+      aliases: [自动化测试]
+      weight: 0.7

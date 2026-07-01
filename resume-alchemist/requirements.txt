@@ -1,6 +1,11 @@
 # Resume Alchemist - Python Dependencies
 # =============================
 
+# Core (v2 P0+)
+pydantic>=2.5.0
+pyyaml>=6.0.1
+filelock>=3.13.0
+
 # PDF Parsing
 pdfplumber>=0.10.0
 
@@ -15,3 +20,7 @@ weasyprint>=60.0
 
 # Optional: PDF Generation (fallback)
 # playwright>=1.40.0
+
+# Dev / tests
+# pytest>=8.0.0
+# pytest-cov>=4.1.0

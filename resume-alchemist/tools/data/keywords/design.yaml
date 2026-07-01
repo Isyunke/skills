@@ -1,0 +1,68 @@
+schema_version: "2.0"
+schema_type: keyword_pack
+industry: design
+description: UI/UX design keyword pack.
+
+categories:
+  tools:
+    - canonical: Figma
+      weight: 1.0
+    - canonical: Sketch
+      weight: 0.8
+    - canonical: Adobe XD
+      aliases: [XD]
+      weight: 0.7
+    - canonical: Illustrator
+      aliases: [AI]
+      weight: 0.7
+    - canonical: Photoshop
+      aliases: [PS]
+      weight: 0.7
+    - canonical: After Effects
+      aliases: [AE]
+      weight: 0.6
+    - canonical: Principle
+      weight: 0.6
+
+  methodology:
+    - canonical: Design System
+      aliases: [设计系统]
+      weight: 1.0
+    - canonical: Wireframe
+      aliases: [线框图]
+      weight: 0.9
+    - canonical: Prototype
+      aliases: [原型]
+      weight: 0.9
+    - canonical: User Testing
+      aliases: [可用性测试, Usability Testing]
+      weight: 0.9
+    - canonical: User Persona
+      aliases: [用户画像]
+      weight: 0.8
+    - canonical: User Journey
+      aliases: [用户旅程]
+      weight: 0.8
+    - canonical: Information Architecture
+      aliases: [IA, 信息架构]
+      weight: 0.8
+    - canonical: Interaction Design
+      aliases: [交互设计, IxD]
+      weight: 0.9
+
+  concepts:
+    - canonical: Accessibility
+      aliases: [无障碍, a11y]
+      weight: 0.9
+    - canonical: Responsive Design
+      aliases: [响应式设计]
+      weight: 0.8
+    - canonical: Motion Design
+      aliases: [动效设计]
+      weight: 0.7
+    - canonical: Design Thinking
+      aliases: [设计思维]
+      weight: 0.8
+    - canonical: User-Centered Design
+      aliases: [UCD, 用户中心]
+      weight: 0.8

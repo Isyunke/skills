@@ -1,0 +1,26 @@
+[run]
+source = tools
+branch = False
+omit =
+    tools/__pycache__/*
+    # v1 legacy — out of P0 scope, will be replaced by tools/parser.py in P2
+    tools/resume_parser.py
+
+[report]
+# Exclude lines that are legitimately untestable without heavy external deps
+# or that are pure defensive fallbacks. Keep this list short and specific.
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    # Engine implementations require weasyprint/playwright actually installed
+    def html_to_pdf_weasyprint
+    def html_to_pdf_playwright
+    def _probe_weasyprint
+    def _probe_playwright
+show_missing = True
+skip_covered = False
+precision = 1
+
+[html]
+directory = .coverage_html

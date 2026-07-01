@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, "v2-*" ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: pytest · ${{ matrix.os }} · py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            resume-alchemist/requirements.txt
+
+      - name: Install v2 core dependencies
+        working-directory: resume-alchemist
+        run: |
+          python -m pip install --upgrade pip
+          # Only the deps needed to exercise tools/ + tests/.
+          # Heavy optional deps (weasyprint/playwright/pdfplumber/docx) are
+          # excluded here to keep CI fast; their code paths are excluded via
+          # .coveragerc or gracefully-degraded probes.
+          pip install "pydantic>=2.5.0" "pyyaml>=6.0.1" "filelock>=3.13.0" \
+                      pytest pytest-cov
+
+      - name: Run test suite with coverage
+        working-directory: resume-alchemist
+        run: |
+          python -m pytest tests/ \
+            --cov=tools \
+            --cov-config=.coveragerc \
+            --cov-report=term-missing \
+            --cov-fail-under=80 \
+            -q
+
+      - name: Smoke-test CLI entrypoints
+        working-directory: resume-alchemist
+        run: |
+          python -m tools.evidence_validator --project-root . --json > /dev/null
+          python -m tools.state_builder --project-root . --json > /dev/null
+          python -m tools.keyword_matcher --list-industries
+        shell: bash
+
+  lint-yaml:
+    name: keyword pack YAML sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install "pyyaml>=6.0.1"
+
+      - name: Validate every keyword pack loads
+        working-directory: resume-alchemist
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import sys, yaml
+          root = Path("tools/data/keywords")
+          errors = []
+          for f in sorted(root.glob("*.yaml")):
+              try:
+                  data = yaml.safe_load(f.read_text(encoding="utf-8"))
+              except Exception as e:
+                  errors.append(f"{f}: {e}")
+                  continue
+              if not isinstance(data, dict):
+                  errors.append(f"{f}: top-level must be a mapping")
+                  continue
+              if data.get("schema_version") != "2.0":
+                  errors.append(f"{f}: schema_version must be '2.0'")
+              if data.get("schema_type") != "keyword_pack":
+                  errors.append(f"{f}: schema_type must be 'keyword_pack'")
+              cats = data.get("categories") or {}
+              if not cats:
+                  errors.append(f"{f}: no categories defined")
+              for cat, items in cats.items():
+                  for i, item in enumerate(items or []):
+                      if "canonical" not in item:
+                          errors.append(f"{f}: {cat}[{i}] missing 'canonical'")
+          if errors:
+              print("\n".join(errors))
+              sys.exit(1)
+          print("All keyword packs valid.")
+          PY

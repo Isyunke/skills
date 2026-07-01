@@ -1,82 +1,111 @@
 #!/usr/bin/env bash
 #
-# resume-alchemist / evidence chain hook
+# resume-alchemist / evidence chain hook (v2 shim)
 #
-# Ensures that skills mentioned in resume have supporting evidence in project files.
-# Checks for evidence chain: skill → project → quantified result
+# Same architecture as truth-verification.sh: try the v2 Python validator
+# on the ``evidence_chain`` principle, fall back to v1 grep if the v2 tools
+# aren't installed.
 #
-# Uses python for JSON parsing (no jq dependency).
-#
-# Exit codes:
-#   0 = allow tool call to proceed
-#   1 = block tool call
-
+# See truth-verification.sh for the full contract description.
 set -uo pipefail
 
-# Read tool call payload from stdin
-input=$(cat)
-if [[ -z "$input" ]]; then
-  exit 0
-fi
+input="$(cat || true)"
+[ -z "$input" ] && exit 0
 
-# Extract tool name and file path using python (no jq dependency)
-tool_name=$(echo "$input" | python -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_name',''))" 2>/dev/null || echo "")
-file_path=$(echo "$input" | python -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" 2>/dev/null || echo "")
+_tool_name="$(printf '%s' "$input" | python -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_name',''))" 2>/dev/null || echo "")"
+_file_path="$(printf '%s' "$input" | python -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" 2>/dev/null || echo "")"
 
-# Only intercept Write and Edit
-if [[ "$tool_name" != "Write" && "$tool_name" != "Edit" ]]; then
-  exit 0
-fi
-
-# Only intercept resume HTML files
-case "$file_path" in
-  */resumes/*/resume*.html)
-    : # match — continue checking
-    ;;
-  *)
-    exit 0
-    ;;
+case "$_tool_name" in
+  Write|Edit) : ;;
+  *) exit 0 ;;
 esac
 
-# For Write — check if content has proper evidence chain
-if [[ "$tool_name" == "Write" ]]; then
-  content=$(echo "$input" | python -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('content',''))" 2>/dev/null || echo "")
+case "$_file_path" in
+  */resumes/*/resume*.html|*/resumes/*/resume*.yaml|*/profile/skills/data.yaml|*/profile/projects/*/data.yaml)
+    : ;;  # match — proceed
+  *)
+    exit 0 ;;
+esac
 
-  if [[ -z "$content" ]]; then
-    exit 0
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+
+_locate_alchemist_root() {
+  if [ -n "${RESUME_ALCHEMIST_ROOT:-}" ] && [ -d "$RESUME_ALCHEMIST_ROOT/tools/schemas" ]; then
+    printf '%s' "$RESUME_ALCHEMIST_ROOT"
+    return 0
   fi
-
-  # Check for quantified results
-  # Look for patterns like "提升XX%", "增长XX%", "节省XX"
-  has_quantification=false
-  if echo "$content" | grep -qE "(提升|增长|节省|优化|降低|提高|减少)[0-9]+%"; then
-    has_quantification=true
+  local candidate="$HOME/.claude/skills/resume-alchemist"
+  if [ -d "$candidate/tools/schemas" ]; then
+    printf '%s' "$candidate"
+    return 0
   fi
-
-  # Check for project references
-  has_project_reference=false
-  if echo "$content" | grep -qE "(项目|proj-|Project)"; then
-    has_project_reference=true
+  if python -c "import resume_alchemist" 2>/dev/null; then
+    printf '%s' "__pip__"
+    return 0
   fi
+  return 1
+}
 
-  # If resume has skills but no quantification or project references, block
-  if echo "$content" | grep -qE "(精通|熟练)" && [[ "$has_quantification" == false ]] && [[ "$has_project_reference" == false ]]; then
-    cat >&2 <<EOF
+_run_v2_validator() {
+  local root
+  if ! root="$(_locate_alchemist_root)"; then
+    return 127
+  fi
+  if [ "$root" = "__pip__" ]; then
+    python -m resume_alchemist.tools.evidence_validator \
+      --project-root "$PROJECT_DIR" \
+      --principle evidence_chain 2>&1
+    return $?
+  fi
+  ( cd "$root" && python -m tools.evidence_validator \
+      --project-root "$PROJECT_DIR" \
+      --principle evidence_chain 2>&1 )
+  return $?
+}
 
-BLOCKED: Resume mentions skills but lacks quantified results or project references.
+output=""
+if output="$(_run_v2_validator)"; then
+  exit 0
+else
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    printf '%s\n' "$output" >&2
+    cat >&2 <<'EOF'
 
-To proceed:
-  1. Add quantified results (e.g., "性能提升50%")
-  2. Reference specific projects (e.g., "在XX项目中")
-  3. Use STAR method: Situation, Task, Action, Result
-  4. Use /resume-mine or /resume-verify to build evidence chain
-
-Every skill claim must have: project reference + quantified result.
-
-See: shared-references/core-principles.md (Evidence Chain principle)
+BLOCKED by resume-alchemist evidence-chain hook.
+Each skill claim must have: project reference + quantified result.
+See shared-references/core-principles.md (Evidence Chain principle).
 EOF
     exit 1
   fi
-fi
+  # Fallback: v1 grep heuristic on resume Write payloads only
+  if [ "$_tool_name" = "Write" ]; then
+    content="$(printf '%s' "$input" | python -c "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('content',''))" 2>/dev/null || echo "")"
+    if [ -n "$content" ]; then
+      has_quantification=false
+      if printf '%s' "$content" | grep -qE "(提升|增长|节省|优化|降低|提高|减少)[0-9]+%"; then
+        has_quantification=true
+      fi
+      has_project_reference=false
+      if printf '%s' "$content" | grep -qE "(项目|proj-|Project)"; then
+        has_project_reference=true
+      fi
+      if printf '%s' "$content" | grep -qE "(精通|熟练)" \
+         && [ "$has_quantification" = false ] \
+         && [ "$has_project_reference" = false ]; then
+        cat >&2 <<'EOF'
 
-exit 0
+BLOCKED (v1 fallback): Resume mentions skills but lacks quantified results or project references.
+
+Upgrade to v2 for a richer explanation.
+To proceed now:
+  1. Add quantified results (e.g., "性能提升50%")
+  2. Reference specific projects (e.g., "在XX项目中")
+  3. Use STAR method: Situation, Task, Action, Result
+EOF
+        exit 1
+      fi
+    fi
+  fi
+  exit 0
+fi

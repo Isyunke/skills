@@ -1,0 +1,92 @@
+schema_version: "2.0"
+schema_type: keyword_pack
+industry: product
+description: Product management keyword pack.
+
+categories:
+  methodology:
+    - canonical: PRD
+      aliases: [产品需求文档]
+      weight: 1.0
+    - canonical: MRD
+      aliases: [市场需求文档]
+      weight: 0.8
+    - canonical: User Research
+      aliases: [用户研究, UR]
+      weight: 1.0
+    - canonical: A/B Testing
+      aliases: [AB测试, AB Testing]
+      weight: 1.0
+    - canonical: Roadmap
+      aliases: [路线图]
+      weight: 0.9
+    - canonical: OKR
+      weight: 0.8
+    - canonical: KPI
+      weight: 0.8
+    - canonical: Sprint
+      aliases: [敏捷冲刺]
+      weight: 0.7
+    - canonical: Agile
+      aliases: [敏捷]
+      weight: 0.8
+
+  growth:
+    - canonical: Growth Hacking
+      aliases: [增长黑客]
+      weight: 0.9
+    - canonical: DAU
+      aliases: [日活]
+      weight: 1.0
+    - canonical: MAU
+      aliases: [月活]
+      weight: 1.0
+    - canonical: Retention
+      aliases: [留存]
+      weight: 1.0
+    - canonical: Conversion Rate
+      aliases: [转化率]
+      weight: 1.0
+    - canonical: Churn Rate
+      aliases: [流失率]
+      weight: 0.9
+    - canonical: LTV
+      aliases: [Life Time Value, 用户生命周期价值]
+      weight: 0.8
+    - canonical: CAC
+      aliases: [Customer Acquisition Cost, 获客成本]
+      weight: 0.8
+    - canonical: North Star Metric
+      aliases: [北极星指标]
+      weight: 0.8
+
+  tools:
+    - canonical: Figma
+      weight: 0.8
+    - canonical: Axure
+      weight: 0.6
+    - canonical: Jira
+      weight: 0.7
+    - canonical: Notion
+      weight: 0.6
+    - canonical: Mixpanel
+      weight: 0.7
+    - canonical: Amplitude
+      weight: 0.7
+    - canonical: Google Analytics
+      aliases: [GA]
+      weight: 0.7
+
+  soft:
+    - canonical: Stakeholder Management
+      aliases: [干系人管理]
+      weight: 0.9
+    - canonical: Cross-functional
+      aliases: [跨部门, 跨职能]
+      weight: 0.8
+    - canonical: Data-driven
+      aliases: [数据驱动]
+      weight: 1.0
+    - canonical: Prioritization
+      aliases: [优先级排序]
+      weight: 0.9
